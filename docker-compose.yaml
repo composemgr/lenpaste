@@ -1,11 +1,22 @@
+# nginx proxy address - http://172.17.0.1:59093
+
 name: lenpaste
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
 services:
   app:
-    image: ghcr.io/lcomrade/lenpaste:1.3.1
+    image: casjaysdevdocker/lenpaste:latest
     container_name: lenpaste-app
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
     restart: always
     pull_policy: always
+    logging: *default-logging
     environment:
+      - TZ=${TZ:-America/New_York}
       - LENPASTE_DB_CLEANUP_PERIOD=1m
       - LENPASTE_ROBOTS_DISALLOW-false
       - LENPASTE_TITLE_TITLE_MAX_LENGTH=120
@@ -21,7 +32,7 @@ services:
       - LENPASTE_NEW_PASTES_PER_15MIN=60
       - LENPASTE_NEW_PASTES_PER_1HOUR=120
       - LENPASTE_DB_DRIVER=postgres
-      - LENPASTE_DB_SOURCE=postgres://lenpaste:pass@db/lenpaste?sslmode=disable
+      - LENPASTE_DB_SOURCE=postgres://lenpaste:ePtsj6AP1rYMYRJvVzM1RRFSP8nj135t@lenpaste-db/lenpaste?sslmode=disable
     ports:
       - '172.17.0.1:59093:80'
     volumes:
@@ -34,14 +45,21 @@ services:
   db:
     image: docker.io/library/postgres:16.1
     container_name: lenpaste-db
+    hostname: lenpaste-db
     restart: always
     pull_policy: always
+    logging: *default-logging
     environment:
       - PGDATA=/var/lib/postgresql/data
       - POSTGRES_USER=lenpaste
-      - POSTGRES_PASSWORD=pass
+      - POSTGRES_PASSWORD=ePtsj6AP1rYMYRJvVzM1RRFSP8nj135t
     volumes:
       - '/var/lib/srv/$USER/docker/lcomrade/lenpaste/latest/rootfs/data/db/postgres:/var/lib/postgresql/data'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}']
+      interval: 30s
+      timeout: 10s
+      retries: 10
     networks:
       - lenpaste
 
