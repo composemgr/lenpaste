@@ -36,7 +36,7 @@ services:
     ports:
       - '172.17.0.1:59093:80'
     volumes:
-      - '/var/lib/srv/$USER/docker/lcomrade/lenpaste/latest/rootfs/data/lenpaste:/data'
+      - '/var/lib/srv/$USER/docker/lenpaste/rootfs/data/lenpaste:/data'
     depends_on:
       - db
     networks:
@@ -54,7 +54,7 @@ services:
       - POSTGRES_USER=lenpaste
       - POSTGRES_PASSWORD=ePtsj6AP1rYMYRJvVzM1RRFSP8nj135t
     volumes:
-      - '/var/lib/srv/$USER/docker/lcomrade/lenpaste/latest/rootfs/data/db/postgres:/var/lib/postgresql/data'
+      - '/var/lib/srv/$USER/databases/postgres/lenpaste:/var/lib/postgresql/data'
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}']
       interval: 30s
