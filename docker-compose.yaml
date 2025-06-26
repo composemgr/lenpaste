@@ -1,0 +1,70 @@
+# nginx proxy address - http://172.17.0.1:59093
+
+name: lenpaste
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  app:
+    image: ghcr.io/lcomrade/lenpaste:1.3.1
+    container_name: lenpaste-app
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      - TZ=${TZ:-America/New_York}
+      - LENPASTE_DB_CLEANUP_PERIOD=1m
+      - LENPASTE_ROBOTS_DISALLOW-false
+      - LENPASTE_TITLE_TITLE_MAX_LENGTH=120
+      - LENPASTE_BODY_MAX_LENGTH=9999999999999999
+      - LENPASTE_MAX_PASTE_LIFETIME=unlimited
+      - LENPASTE_ADMIN_NAME="${APP_ORG_NAME}"
+      - LENPASTE_ADDRESS=${BASE_HOST_NAME:-$HOSTNAME}
+      - LENPASTE_UI_DEFAULT_LIFETIME=never
+      - LENPASTE_UI_DEFAULT_THEME=dark
+      - LENPASTE_GET_PASTES_PER_5MIN=0
+      - LENPASTE_GET_PASTES_PER_15MIN=0
+      - LENPASTE_GET_PASTES_PER_1HOUR=0
+      - LENPASTE_NEW_PASTES_PER_5MIN=30
+      - LENPASTE_NEW_PASTES_PER_15MIN=60
+      - LENPASTE_NEW_PASTES_PER_1HOUR=120
+      - LENPASTE_DB_DRIVER=postgres
+      - LENPASTE_DB_SOURCE=postgres://lenpaste:ePtsj6AP1rYMYRJvVzM1RRFSP8nj135t@lenpaste-db/lenpaste?sslmode=disable
+    ports:
+      - '172.17.0.1:59093:80'
+    volumes:
+      - './rootfs/data/lenpaste:/data'
+    depends_on:
+      - db
+    networks:
+      - lenpaste
+
+  db:
+    image: docker.io/library/postgres:16.1
+    container_name: lenpaste-db
+    hostname: lenpaste-db
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      - PGDATA=/var/lib/postgresql/data
+      - POSTGRES_USER=lenpaste
+      - POSTGRES_PASSWORD=ePtsj6AP1rYMYRJvVzM1RRFSP8nj135t
+    volumes:
+      - './rootfs/db/postgres:/var/lib/postgresql/data'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}']
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    networks:
+      - lenpaste
+
+networks:
+  lenpaste:
+    name: lenpaste
+    external: false
